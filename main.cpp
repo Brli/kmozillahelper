@@ -59,7 +59,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 // #define DEBUG_KDE
 
 #define HELPER_VERSION 6
-#define APP_HELPER_VERSION "5.0.6"
+#define APP_HELPER_VERSION "5.99.0"
+
+using namespace Qt::Literals::StringLiterals;
 
 int main(int argc, char *argv[])
 {
@@ -70,12 +72,12 @@ int main(int argc, char *argv[])
 
     // Check whether we're called from Firefox or Thunderbird
     QString appname = i18n("Mozilla Firefox");
-    QString parent = QFile::symLinkTarget(QStringLiteral("/proc/%1/exe").arg(int(getppid())));
-    if (parent.contains("thunderbird", Qt::CaseInsensitive))
+    QString parent = QFile::symLinkTarget(u"/proc/%1/exe"_s).arg(int(getppid()));
+    if (parent.contains(u"thunderbird"_s), Qt::CaseInsensitive)
         appname = i18n("Mozilla Thunderbird");
 
     // This shows on file dialogs
-    KAboutData about("kmozillahelper", appname, APP_HELPER_VERSION);
+    KAboutData about(u"kmozillahelper"_s), appname_s, APP_HELPER_VERSION_s;
     about.setBugAddress("https://bugzilla.opensuse.org/enter_bug.cgi");
     KAboutData::setApplicationData(about);
     QApplication::setQuitOnLastWindowClosed(false);
@@ -130,58 +132,59 @@ void Helper::readCommand()
     std::cerr << "COMMAND: " << command.toStdString() << std::endl;
 #endif
     bool status;
-    if (command == "CHECK")
+    if (command == u"CHECK"_s)
         status = handleCheck();
-    else if (command == "GETPROXY")
+    else if (command == u"GETPROXY"_s)
         status = handleGetProxy();
-    else if (command == "HANDLEREXISTS")
+    else if (command == u"HANDLEREXISTS"_s)
         status = handleHandlerExists();
-    else if (command == "GETFROMEXTENSION")
+    else if (command == u"GETFROMEXTENSION"_s)
         status = handleGetFromExtension();
-    else if (command == "GETFROMTYPE")
+    else if (command == u"GETFROMTYPE"_s)
         status = handleGetFromType();
-    else if (command == "GETAPPDESCFORSCHEME")
+    else if (command == u"GETAPPDESCFORSCHEME"_s)
         status = handleGetAppDescForScheme();
-    else if (command == "APPSDIALOG")
+    else if (command == u"APPSDIALOG"_s)
         status = handleAppsDialog();
-    else if (command == "GETOPENFILENAME")
+    else if (command == u"GETOPENFILENAME"_s)
         status = handleGetOpenOrSaveX(false, false);
-    else if (command == "GETOPENURL")
+    else if (command == u"GETOPENURL"_s)
         status = handleGetOpenOrSaveX(true, false);
-    else if (command == "GETSAVEFILENAME")
+    else if (command == u"GETSAVEFILENAME"_s)
         status = handleGetOpenOrSaveX(false, true);
-    else if (command == "GETSAVEURL")
+    else if (command == u"GETSAVEURL"_s)
         status = handleGetOpenOrSaveX(true, true);
-    else if (command == "GETDIRECTORYFILENAME")
+    else if (command == u"GETDIRECTORYFILENAME"_s)
         status = handleGetDirectoryX(false);
-    else if (command == "GETDIRECTORYURL")
+    else if (command == u"GETDIRECTORYURL"_s)
         status = handleGetDirectoryX(true);
-    else if (command == "OPEN")
+    else if (command == u"OPEN"_s)
         status = handleOpen();
-    else if (command == "REVEAL")
+    else if (command == u"REVEAL"_s)
         status = handleReveal();
-    else if (command == "RUN")
+    else if (command == u"RUN"_s)
         status = handleRun();
-    else if (command == "GETDEFAULTFEEDREADER")
+    else if (command == u"GETDEFAULTFEEDREADER"_s)
         status = handleGetDefaultFeedReader();
-    else if (command == "OPENMAIL")
+    else if (command == u"OPENMAIL"_s)
         status = handleOpenMail();
-    else if (command == "OPENNEWS")
+    else if (command == u"OPENNEWS"_s)
         status = handleOpenNews();
-    else if (command == "ISDEFAULTBROWSER")
+    else if (command == u"ISDEFAULTBROWSER"_s)
         status = handleIsDefaultBrowser();
-    else if (command == "SETDEFAULTBROWSER")
+    else if (command == u"SETDEFAULTBROWSER"_s)
         status = handleSetDefaultBrowser();
-    else if (command == "DOWNLOADFINISHED")
+    else if (command == u"DOWNLOADFINISHED"_s)
         status = handleDownloadFinished();
     else
     {
         std::cerr << "Unknown command for KDE helper: " << command.toStdString() << std::endl;
         status = false;
     }
+    int ststus_num = QVariant(status).toInt();
     // status done as \1 (==ok) and \0 (==not ok), because otherwise this cannot happen
     // in normal data (\ is escaped otherwise)
-    outputLine(status ? "\\1" : "\\0", false); // do not escape
+    outputLine(QVariant(status).toInt() ? u"1"_s: u"0"_s, false); // do not escape
 
     /* See comment on setEnabled above
     notifier.setEnabled(true); */
@@ -208,9 +211,9 @@ bool Helper::handleGetProxy()
     if (!allArgumentsUsed())
         return false;
     QString proxy;
-    if (proxy.isEmpty() || proxy == "DIRECT") // TODO return DIRECT if empty?
+    if (proxy.isEmpty() || proxy == u"DIRECT"_s) // TODO return DIRECT if empty?
     {
-        outputLine("DIRECT");
+        outputLine(u"DIRECT"_s);
         return true;
     }
     QUrl proxyurl = QUrl::fromUserInput(proxy);
@@ -243,7 +246,7 @@ bool Helper::handleHandlerExists()
     if (*it)
         return true;
 
-    return KApplicationTrader::preferredService(QLatin1String("x-scheme-handler/") + protocol) != nullptr;
+    return KApplicationTrader::preferredService("x-scheme-handler/"_L1 + protocol) != nullptr;
 }
 
 bool Helper::handleGetFromExtension()
@@ -342,7 +345,7 @@ bool Helper::handleAppsDialog()
             command = dialog.text();
         else
             return false;
-        command = command.split(" ").first(); // only the actual command
+        command = command.split(u" "_s).first(); // only the actual command
         command = QStandardPaths::findExecutable(command);
         if (command.isEmpty())
             return false;
@@ -357,11 +360,11 @@ QStringList Helper::convertToNameFilters(const QString &input)
     QStringList ret;
 
     // Filters separated by newline
-    for (auto &filter : input.split('\n'))
+    for (auto &filter : input.split('\n'_L1))
     {
         // Filer exp and name separated by '|'.
         // TODO: Is it possible that | appears in either of those?
-        auto data = filter.split('|');
+        auto data = filter.split('|'_L1);
 
         if (data.length() == 1)
             ret.append(QStringLiteral("%0 Files(%0)").arg(data[0]));
@@ -381,7 +384,7 @@ bool Helper::handleGetOpenOrSaveX(bool url, bool save)
     QStringList filtersParsed = convertToNameFilters(getArgument());
     int selectFilter = getArgument().toInt();
     QString title = getArgument();
-    bool multiple = save ? false : isArgument("MULTIPLE");
+    bool multiple = save ? false : isArgument(u"MULTIPLE"_s);
     this->wid = getArgumentParent();
     if (!allArgumentsUsed())
         return false;
@@ -407,7 +410,7 @@ bool Helper::handleGetOpenOrSaveX(bool url, bool save)
         // If url == false only allow local files. Impossible to do with Qt < 5.6...
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
     if (url == false)
-        dialog.setSupportedSchemes(QStringList(QStringLiteral("file")));
+        dialog.setSupportedSchemes(QStringList(u"file"_s));
 #endif
 
     // Run dialog
@@ -455,7 +458,7 @@ bool Helper::handleGetDirectoryX(bool url)
 
     if (url)
     {
-        QUrl result = QFileDialog::getExistingDirectoryUrl(nullptr, title, startDir);
+        QUrl result = QFileDialog::getExistingDirectoryUrl(nullptr, title, QUrl::fromLocalFile(startDir));
         if (result.isValid())
         {
             outputLine(result.url());
@@ -480,7 +483,7 @@ bool Helper::handleOpen()
         return false;
     QUrl url = QUrl::fromUserInput(getArgument());
     QString mime;
-    if (isArgument("MIMETYPE"))
+    if (isArgument(u"MIMETYPE"_s))
         mime = getArgument();
     if (!allArgumentsUsed())
         return false;
@@ -510,16 +513,16 @@ bool Helper::handleReveal()
     QString path = getArgument();
     if (!allArgumentsUsed())
         return false;
-    const KService::List apps = KApplicationTrader::queryByMimeType(QStringLiteral("inode/directory"));
+    const KService::List apps = KApplicationTrader::queryByMimeType(u"inode/directory"_s);
     if (apps.size() != 0)
     {
-        QString command = apps.at(0)->exec().split(" ").first(); // only the actual command
-        if (command == "dolphin" || command == "konqueror")
+        QString command = apps.at(0)->exec().split(u" "_s).first(); // only the actual command
+        if (command == u"dolphin"_s || command == u"konqueror"_s)
         {
             command = QStandardPaths::findExecutable(command);
             if (command.isEmpty())
                 return false;
-            return KProcess::startDetached(command, QStringList() << "--select" << path);
+            return KProcess::startDetached(command, QStringList() << u"--select"_s << path);
         }
     }
     QFileInfo info(path);
@@ -547,7 +550,7 @@ bool Helper::handleGetDefaultFeedReader()
     if (!readArguments(0))
         return false;
     // firefox wants the full path
-    QString reader = QStandardPaths::findExecutable("akregator"); // TODO there is no KDE setting for this
+    QString reader = QStandardPaths::findExecutable(u"akregator"_s); // TODO there is no KDE setting for this
     if (!reader.isEmpty())
     {
         outputLine(reader);
@@ -561,19 +564,19 @@ bool Helper::handleOpenMail()
     if (!readArguments(0))
         return false;
     // this is based on ktoolinvocation_x11.cpp, there is no API for this
-    KConfig config("emaildefaults");
-    QString groupname = KConfigGroup(&config, "Defaults").readEntry("Profile", "Default");
-    KConfigGroup group(&config, QString("PROFILE_%1").arg(groupname));
+    KConfig config(u"emaildefaults"_s);
+    QString groupname = KConfigGroup(&config, u"Defaults"_s).readEntry("Profile", "Default");
+    KConfigGroup group(&config, QStringLiteral("PROFILE_%1").arg(groupname));
     QString command = group.readPathEntry("EmailClient", QString());
     if (command.isEmpty())
-        command = "kmail";
+        command = u"kmail"_s;
     if (group.readEntry("TerminalClient", false))
     {
         QString terminal =
-            KConfigGroup(KSharedConfig::openConfig(), "General").readPathEntry("TerminalApplication", "konsole");
+            KConfigGroup(KSharedConfig::openConfig(), u"General"_s).readPathEntry("TerminalApplication", u"konsole"_s);
         command = terminal + " -e " + command;
     }
-    KService::Ptr mail = KService::serviceByDesktopName(command.split(" ").first());
+    KService::Ptr mail = KService::serviceByDesktopName(command.split(u" "_s).first());
     if (mail)
     {
         return runApplication(mail, QList<QUrl>()); // TODO parent
@@ -585,7 +588,7 @@ bool Helper::handleOpenNews()
 {
     if (!readArguments(0))
         return false;
-    KService::Ptr news = KService::serviceByDesktopName("knode"); // TODO there is no KDE setting for this
+    KService::Ptr news = KService::serviceByDesktopName(u"knode"_s); // TODO there is no KDE setting for this
     if (news)
     {
         return runApplication(news, QList<QUrl>()); // TODO parent
@@ -597,19 +600,19 @@ bool Helper::handleIsDefaultBrowser()
 {
     if (!readArguments(0))
         return false;
-    QString browser = KConfigGroup(KSharedConfig::openConfig("kdeglobals"), "General").readEntry("BrowserApplication");
-    return browser == "MozillaFirefox" || browser == "MozillaFirefox.desktop" || browser == "!firefox" ||
-           browser == "!/usr/bin/firefox" || browser == "firefox" || browser == "firefox.desktop";
+    QString browser = KConfigGroup(KSharedConfig::openConfig(u"kdeglobals"_s), u"General"_s).readEntry("BrowserApplication");
+    return browser == u"MozillaFirefox"_s || browser == u"MozillaFirefox.desktop"_s || browser == u"!firefox"_s ||
+           browser == u"!/usr/bin/firefox"_s || browser == u"firefox"_s || browser == u"firefox.desktop"_s;
 }
 
 bool Helper::handleSetDefaultBrowser()
 {
     if (!readArguments(1))
         return false;
-    bool alltypes = (getArgument() == "ALLTYPES");
+    bool alltypes = (getArgument() == u"ALLTYPES"_s);
     if (!allArgumentsUsed())
         return false;
-    KConfigGroup(KSharedConfig::openConfig("kdeglobals"), "General").writeEntry("BrowserApplication", "firefox");
+    KConfigGroup(KSharedConfig::openConfig(u"kdeglobals"_s), u"General"_s).writeEntry(u"BrowserApplication"_s, u"firefox"_s);
     if (alltypes)
     {
         // TODO there is no API for this and it is a bit complex
@@ -627,16 +630,16 @@ bool Helper::handleDownloadFinished()
     // TODO cheat a bit due to i18n freeze - the strings are in the .notifyrc file,
     // taken from KGet, but the notification itself needs the text too.
     // So create it from there.
-    KConfig cfg("kmozillahelper.notifyrc", KConfig::FullConfig, QStandardPaths::AppDataLocation);
-    QString message = KConfigGroup(&cfg, "Event/downloadfinished").readEntry("Comment");
-    KNotification::event("downloadfinished", download + " : " + message);
+    KConfig cfg(u"kmozillahelper.notifyrc"_s, KConfig::FullConfig, QStandardPaths::AppDataLocation);
+    QString message = KConfigGroup(&cfg, u"Event/downloadfinished"_s).readEntry("Comment");
+    KNotification::event(u"downloadfinished"_s, download + " : " + message);
     return true;
 }
 
 QString Helper::getAppForProtocol(const QString &protocol)
 {
     /* Inspired by kio's krun.cpp */
-    const KService::Ptr service = KApplicationTrader::preferredService(QLatin1String("x-scheme-handler/") + protocol);
+    const KService::Ptr service = KApplicationTrader::preferredService("x-scheme-handler/"_L1 + protocol);
     if (service)
         return service->name();
 
@@ -655,8 +658,8 @@ QString Helper::getAppForProtocol(const QString &protocol)
     if (exec.isEmpty())
         return {};
 
-    if (exec.contains(' '))
-        exec = exec.split(' ').first(); // first part of command
+    if (exec.contains(' '_L1))
+        exec = exec.split(' '_L1).first(); // first part of command
 
     if (KService::Ptr service = KService::serviceByDesktopName(exec))
         return service->name();
@@ -687,10 +690,10 @@ QString Helper::readLine()
         return {};
 
     QString qline = QString::fromStdString(line);
-    qline.replace("\\n", "\n");
-    qline.replace("\\"
-                  "\\",
-                  "\\");
+    qline.replace(u"\\n"_s, u"\n"_s);
+    qline.replace(u"\\"_s
+                  u"\\"_s,
+                  u"\\"_s);
     return qline;
 }
 
@@ -717,9 +720,9 @@ void Helper::outputLine(QString line, bool escape)
 {
     if (escape)
     {
-        line.replace("\\", "\\"
-                           "\\");
-        line.replace("\n", "\\n");
+        line.replace(u"\\"_s, u"\\_s"
+                           u"\\"_s);
+        line.replace(u"\n"_s, u"\\n"_s);
     }
     std::cout << line.toStdString() << std::endl;
 #ifdef DEBUG_KDE
@@ -738,7 +741,7 @@ bool Helper::readArguments(int mincount)
             arguments.clear();
             return false;
         }
-        if (line == "\\E")
+        if (line == u"\\E"_s)
         {
             arguments_read = true;
             if (arguments.count() >= mincount)
@@ -772,14 +775,14 @@ bool Helper::allArgumentsUsed()
     arguments_read = false;
     if (arguments.isEmpty())
         return true;
-    std::cerr << "Unused arguments for KDE helper:" << arguments.join(" ").toStdString() << std::endl;
+    std::cerr << "Unused arguments for KDE helper:" << arguments.join(u" "_s).toStdString() << std::endl;
     arguments.clear();
     return false;
 }
 
 long Helper::getArgumentParent()
 {
-    if (isArgument("PARENT"))
+    if (isArgument(u"PARENT"_s))
         return getArgument().toLong();
     return 0;
 }
