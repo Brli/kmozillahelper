@@ -65,7 +65,8 @@ class Helper : public QObject
 
   protected:
     virtual bool eventFilter(QObject *obj, QEvent *ev) override;
-  private slots:
+
+  Q_SLOT
     void readCommand();
 
   private:

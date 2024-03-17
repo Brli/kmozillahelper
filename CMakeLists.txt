@@ -16,7 +16,7 @@ include(KDECMakeSettings)
 include(KDECompilerSettings)
 include(FeatureSummary)
 
-find_package(Qt6 ${QT_MIN_VERSION} REQUIRED COMPONENTS Core Qml)
+find_package(Qt6 ${QT_MIN_VERSION} REQUIRED COMPONENTS Core Gui)
 find_package(KF6 ${KF_MIN_VERSION} REQUIRED COMPONENTS Notifications KIO WindowSystem I18n)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")

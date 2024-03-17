@@ -181,7 +181,6 @@ void Helper::readCommand()
         std::cerr << "Unknown command for KDE helper: " << command.toStdString() << std::endl;
         status = false;
     }
-    int ststus_num = QVariant(status).toInt();
     // status done as \1 (==ok) and \0 (==not ok), because otherwise this cannot happen
     // in normal data (\ is escaped otherwise)
     outputLine(QVariant(status).toInt() ? u"1"_s: u"0"_s, false); // do not escape
@@ -219,9 +218,9 @@ bool Helper::handleGetProxy()
     QUrl proxyurl = QUrl::fromUserInput(proxy);
     if (proxyurl.isValid())
     { // firefox wants this format
-        outputLine("PROXY"
-                   " " +
-                   proxyurl.host() + ":" + QString::number(proxyurl.port()));
+        outputLine("PROXY"_L1
+                   " "_L1 +
+                   proxyurl.host() + ":"_L1 + QString::number(proxyurl.port()));
         // TODO there is also "SOCKS " type
         return true;
     }
@@ -325,7 +324,7 @@ bool Helper::handleAppsDialog()
     long wid = getArgumentParent();
     if (!allArgumentsUsed())
         return false;
-    KOpenWithDialog dialog(NULL);
+    KOpenWithDialog dialog(nullptr);
     if (!title.isEmpty())
         dialog.setWindowTitle(title);
     dialog.hideNoCloseOnExit();
@@ -499,7 +498,7 @@ bool Helper::handleOpen()
     }
     else
     {
-        (void)new KIO::OpenUrlJob(url, NULL);
+        (void)new KIO::OpenUrlJob(url, nullptr);
         //    QObject::connect(run, SIGNAL(finished()), &app, SLOT(openDone()));
         //    QObject::connect(run, SIGNAL(error()), &app, SLOT(openDone()));
         return true; // TODO check for errors?
@@ -527,7 +526,7 @@ bool Helper::handleReveal()
     }
     QFileInfo info(path);
     QString dir = info.dir().path();
-    (void)new KIO::OpenUrlJob(QUrl::fromLocalFile(dir), NULL); // TODO parent
+    (void)new KIO::OpenUrlJob(QUrl::fromLocalFile(dir), nullptr); // TODO parent
     return true;                                               // TODO check for errors?
 }
 
@@ -665,11 +664,11 @@ QString Helper::getAppForProtocol(const QString &protocol)
         return service->name();
 
     QString servicename;
-    foreach (KService::Ptr service, KService::allServices())
+    for (KService::Ptr service : KService::allServices())
     {
         QString exec2 = service->exec();
-        if (exec2.contains(' '))
-            exec2 = exec2.split(' ').first(); // first part of command
+        if (exec2.contains(' '_L1))
+            exec2 = exec2.split(' '_L1).first(); // first part of command
         if (exec == exec2)
         {
             servicename = service->name();
@@ -677,7 +676,7 @@ QString Helper::getAppForProtocol(const QString &protocol)
         }
     }
 
-    if (servicename.isEmpty() && exec == "kmailservice") // kmailto is handled internally by kmailservice
+    if (servicename.isEmpty() && exec == u"kmailservice"_s) // kmailto is handled internally by kmailservice
         servicename = i18n("KDE");
 
     return servicename;
