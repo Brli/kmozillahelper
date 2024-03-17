@@ -72,8 +72,8 @@ int main(int argc, char *argv[])
 
     // Check whether we're called from Firefox or Thunderbird
     QString appname = i18n("Mozilla Firefox");
-    QString parent = QFile::symLinkTarget(u"/proc/%1/exe"_s).arg(int(getppid()));
-    if (parent.contains(u"thunderbird"_s), Qt::CaseInsensitive)
+    QString parent = QFile::symLinkTarget(u"/proc/%1/exe"_s);
+    if (parent.contains("thunderbird"_L1))
         appname = i18n("Mozilla Thunderbird");
 
     // This shows on file dialogs
