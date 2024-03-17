@@ -257,7 +257,7 @@ bool Helper::handleGetFromExtension()
         return false;
     if (!ext.isEmpty())
     {
-        QList<QMimeType> mimeList = QMimeDatabase().mimeTypesForFileName("foo." + ext);
+        QList<QMimeType> mimeList = QMimeDatabase().mimeTypesForFileName("foo."_L1 + ext);
         for (const QMimeType &mime : mimeList)
             if (mime.isValid())
                 return writeMimeInfo(mime);
@@ -573,7 +573,7 @@ bool Helper::handleOpenMail()
     {
         QString terminal =
             KConfigGroup(KSharedConfig::openConfig(), u"General"_s).readPathEntry("TerminalApplication", u"konsole"_s);
-        command = terminal + " -e " + command;
+        command = terminal + " -e "_L1 + command;
     }
     KService::Ptr mail = KService::serviceByDesktopName(command.split(u" "_s).first());
     if (mail)
@@ -631,7 +631,7 @@ bool Helper::handleDownloadFinished()
     // So create it from there.
     KConfig cfg(u"kmozillahelper.notifyrc"_s, KConfig::FullConfig, QStandardPaths::AppDataLocation);
     QString message = KConfigGroup(&cfg, u"Event/downloadfinished"_s).readEntry("Comment");
-    KNotification::event(u"downloadfinished"_s, download + " : " + message);
+    KNotification::event("downloadfinished"_L1, download + " : "_L1 + message);
     return true;
 }
 
