@@ -2,13 +2,15 @@ cmake_minimum_required(VERSION 3.20.6)
 
 project(kmozillahelper)
 
-set(KF_MIN_VERSION "5.85.0")
+set(QT_MAJOR_VERSION "6")
+set(QT_MIN_VERSION "6.5.0")
+set(KF_MIN_VERSION "5.115.0")
 
 find_package(
     ECM
     ${KF_MIN_VERSION}
-    REQUIRED
-    NO_MODULE)
+    CONFIG
+    REQUIRED)
 
 set(CMAKE_MODULE_PATH ${ECM_MODULE_PATH} ${ECM_KDE_MODULE_DIR})
 
@@ -21,8 +23,10 @@ include(KDEClangFormat)
 include(KDEGitCommitHooks)
 include(FeatureSummary)
 
+find_package(Qt6 ${QT_MIN_VERSION} REQUIRED COMPONENTS Core Gui Widgets)
+
 find_package(
-    KF5 REQUIRED
+    KF6 ${KF_MIN_VERSION} REQUIRED
     COMPONENTS Notifications
                KIO
                WindowSystem
@@ -32,10 +36,10 @@ add_executable(kmozillahelper main.cpp main.h)
 
 target_link_libraries(
     kmozillahelper
-    KF5::I18n
-    KF5::KIOWidgets
-    KF5::Notifications
-    KF5::WindowSystem)
+    KF6::I18n
+    KF6::KIOWidgets
+    KF6::Notifications
+    KF6::WindowSystem)
 
 # add clang-format target for all our real source files
 file(
@@ -50,4 +54,4 @@ feature_summary(WHAT ALL INCLUDE_QUIET_PACKAGES
                          FATAL_ON_MISSING_REQUIRED_PACKAGES)
 
 install(TARGETS kmozillahelper DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/mozilla/)
-install(FILES kmozillahelper.notifyrc DESTINATION ${KNOTIFYRC_INSTALL_DIR})
+install(FILES kmozillahelper.notifyrc DESTINATION ${KDE_INSTALL_KNOTIFYRCDIR})

@@ -38,15 +38,15 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QFileDialog>
 
-#include <KConfigCore/KConfigGroup>
-#include <KConfigCore/KSharedConfig>
-#include <KCoreAddons/KAboutData>
-#include <KCoreAddons/KProcess>
-#include <KCoreAddons/KShell>
-#include <KI18n/KLocalizedString>
+#include <KAboutData>
+#include <KApplicationTrader>
+#include <KConfigGroup>
 #include <KIO/ApplicationLauncherJob>
 #include <KIO/CommandLauncherJob>
-#include <KService/KApplicationTrader>
+#include <KLocalizedString>
+#include <KProcess>
+#include <KSharedConfig>
+#include <KShell>
 #include <kio_version.h>
 #if KIO_VERSION >= QT_VERSION_CHECK(5, 98, 0)
 #include <KIO/JobUiDelegateFactory>
@@ -54,12 +54,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <KIO/JobUiDelegate>
 #endif
 #include <KIO/OpenUrlJob>
-#include <KIOCore/KRecentDocument>
-#include <KIOWidgets/KOpenWithDialog>
-#include <KNotifications/KNotification>
+#include <KNotification>
+#include <KOpenWithDialog>
 #include <KProtocolInfo>
-#include <KService/KMimeTypeTrader>
-#include <KWindowSystem/KWindowSystem>
+#include <KRecentDocument>
+#include <KWindowSystem>
 
 //#define DEBUG_KDE
 
@@ -71,11 +70,7 @@ int main(int argc, char *argv[])
     // Avoid getting started by the session manager
     qunsetenv("SESSION_MANAGER");
 
-    QApplication::setAttribute(Qt::AA_EnableHighDpiScaling, true);
-
     QApplication app(argc, argv);
-
-    QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps, true);
 
     // Check whether we're called from Firefox or Thunderbird
     QString appname = i18n("Mozilla Firefox");
@@ -589,15 +584,15 @@ bool Helper::handleOpenMail()
         return false;
     // this is based on ktoolinvocation_x11.cpp, there is no API for this
     KConfig config(QString::fromUtf8("emaildefaults"));
-    QString groupname = KConfigGroup(&config, "Defaults").readEntry("Profile", "Default");
+    QString groupname = KConfigGroup(&config, QString::fromUtf8("Defaults")).readEntry("Profile", "Default");
     KConfigGroup group(&config, QString::fromStdString("PROFILE_%1").arg(groupname));
     QString command = group.readPathEntry("EmailClient", QString());
     if (command.isEmpty())
         command = QString::fromUtf8("kmail");
     if (group.readEntry("TerminalClient", false))
     {
-        QString terminal = KConfigGroup(KSharedConfig::openConfig(), "General")
-                               .readPathEntry("TerminalApplication", QString::fromUtf8("konsole"));
+        QString terminal =
+            KConfigGroup(KSharedConfig::openConfig(), QString::fromUtf8("General")).readPathEntry("TerminalApplication", QString::fromUtf8("konsole"));
         command = terminal + QString::fromUtf8(" -e ") + command;
     }
     KService::Ptr mail = KService::serviceByDesktopName(command.split(QLatin1Char(' ')).first());
@@ -626,8 +621,7 @@ bool Helper::handleIsDefaultBrowser()
 {
     if (!readArguments(0))
         return false;
-    QString browser = KConfigGroup(KSharedConfig::openConfig(QString::fromUtf8("kdeglobals")), "General")
-                          .readEntry("BrowserApplication");
+    QString browser = KConfigGroup(KSharedConfig::openConfig(QString::fromUtf8("kdeglobals")), QString::fromUtf8("General")).readEntry("BrowserApplication");
     return browser == QString::fromUtf8("MozillaFirefox") || browser == QString::fromUtf8("MozillaFirefox.desktop") ||
            browser == QString::fromUtf8("!firefox") || browser == QString::fromUtf8("!/usr/bin/firefox") ||
            browser == QString::fromUtf8("firefox") || browser == QString::fromUtf8("firefox.desktop");
@@ -640,8 +634,7 @@ bool Helper::handleSetDefaultBrowser()
     bool alltypes = (getArgument() == QString::fromUtf8("ALLTYPES"));
     if (!allArgumentsUsed())
         return false;
-    KConfigGroup(KSharedConfig::openConfig(QString::fromUtf8("kdeglobals")), "General")
-        .writeEntry("BrowserApplication", "firefox");
+    KConfigGroup(KSharedConfig::openConfig(QString::fromUtf8("kdeglobals")), QString::fromUtf8("General")).writeEntry("BrowserApplication", "firefox");
     if (alltypes)
     {
         // TODO there is no API for this and it is a bit complex
@@ -660,7 +653,7 @@ bool Helper::handleDownloadFinished()
     // taken from KGet, but the notification itself needs the text too.
     // So create it from there.
     KConfig cfg(QString::fromUtf8("kmozillahelper.notifyrc"), KConfig::FullConfig, QStandardPaths::AppDataLocation);
-    QString message = KConfigGroup(&cfg, "Event/downloadfinished").readEntry("Comment");
+    QString message = KConfigGroup(&cfg, QString::fromUtf8("Event/downloadfinished")).readEntry("Comment");
     KNotification::event(QString::fromUtf8("downloadfinished"), download + QString::fromUtf8(" : ") + message);
     return true;
 }

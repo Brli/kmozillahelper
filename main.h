@@ -24,8 +24,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef MAIN_H
 #define MAIN_H
 
-#include <QtCore/QMimeType>
-#include <QtCore/QSocketNotifier>
+#include <QMimeType>
+#include <QSocketNotifier>
 
 class Helper : public QObject
 {
